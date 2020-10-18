@@ -32,8 +32,8 @@ extern int contend_patron_76543210[];
 //extern z80_byte contend_table[];
 //extern z80_byte contend_table_no_mreq[];
 
-extern z80_byte *contend_table;
-extern z80_byte *contend_table_no_mreq;
+extern z80_byte read_contend_table(int t_states, z80_int addr, char* op);
+extern z80_byte read_contend_table_no_mreq(int t_states, z80_int addr, char* op);
 
 
 extern z80_byte *contend_pages_128k_p2a;

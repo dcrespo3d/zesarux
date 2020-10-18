@@ -7141,7 +7141,7 @@ int parse_cmdline_options(void) {
                         }
 
                         else if (!strcmp(argv[puntero_parametro],"--simulaterealloadfast")) {
-                                tape_loading_simulate_fast.v=1;
+                                 tape_loading_simulate_fast.v=1;
                         }
 
 

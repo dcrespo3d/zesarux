@@ -572,7 +572,7 @@ void poke_byte_spectrum_48k(z80_int dir,z80_byte valor)
 {
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados, dir, "W" );
         }
 #endif
 
@@ -643,7 +643,7 @@ z80_byte *puntero;
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
 			//printf ("t_estados: %d\n",t_estados);
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
                 }
 #endif
                 t_estados += 3;
@@ -710,7 +710,7 @@ z80_byte *puntero;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
                 }
 #endif
                 t_estados += 3;
@@ -766,7 +766,7 @@ void poke_byte_spectrum_inves(z80_int dir,z80_byte valor)
 
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados, dir, "W" );
         }
 #endif
 
@@ -797,7 +797,7 @@ void poke_byte_spectrum_16k(z80_int dir,z80_byte valor)
 
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados, dir, "W" );
         }
 #endif
 
@@ -1388,7 +1388,7 @@ z80_byte peek_byte_spectrum_inves(z80_int dir)
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
                 //printf ("%d\n",t_estados);
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados, dir, "R" );
         }
 #endif
 
@@ -1420,7 +1420,7 @@ z80_byte peek_byte_spectrum_48k(z80_int dir)
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
 		//printf ("%d\n",t_estados);
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados, dir, "R" );
         }
 #endif
 
@@ -1518,7 +1518,7 @@ z80_byte peek_byte_spectrum_128k(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
                 t_estados += 3;
@@ -1563,7 +1563,7 @@ z80_byte peek_byte_spectrum_128kp2a(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
                 t_estados += 3;
@@ -1596,7 +1596,7 @@ z80_byte peek_byte_spectrum_16k(z80_int dir)
 
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados, dir, "R" );
         }
 #endif
 
@@ -1664,7 +1664,7 @@ int segmento;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
                 }
 #endif
                 t_estados += 3;
@@ -1701,7 +1701,7 @@ z80_byte peek_byte_zxuno(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
                 t_estados += 3;
@@ -1744,7 +1744,7 @@ void poke_byte_msx1(z80_int dir,z80_byte valor)
 /*
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados );
         }
 #endif
 */
@@ -1786,7 +1786,7 @@ z80_byte peek_byte_msx1(z80_int dir)
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
 		//printf ("%d\n",t_estados);
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados );
         }
 #endif
 */
@@ -1835,7 +1835,7 @@ void poke_byte_svi(z80_int dir,z80_byte valor)
 /*
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados );
         }
 #endif
 */
@@ -1877,7 +1877,7 @@ z80_byte peek_byte_svi(z80_int dir)
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
 		//printf ("%d\n",t_estados);
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados );
         }
 #endif
 */
@@ -1930,7 +1930,7 @@ void poke_byte_coleco(z80_int dir,z80_byte valor)
 /*
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados );
         }
 #endif
 */
@@ -1972,7 +1972,7 @@ z80_byte peek_byte_coleco(z80_int dir)
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
 		//printf ("%d\n",t_estados);
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados );
         }
 #endif
 */
@@ -2021,7 +2021,7 @@ void poke_byte_sg1000(z80_int dir,z80_byte valor)
 /*
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados );
         }
 #endif
 */
@@ -2063,7 +2063,7 @@ z80_byte peek_byte_sg1000(z80_int dir)
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
 		//printf ("%d\n",t_estados);
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados );
         }
 #endif
 */
@@ -2129,7 +2129,7 @@ int segmento;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
 
                 }
 #endif
@@ -2163,7 +2163,7 @@ z80_byte peek_byte_chloe(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
                 t_estados += 3;
@@ -2509,7 +2509,7 @@ int segmento;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
                 }
 #endif
 
@@ -2548,7 +2548,7 @@ z80_byte peek_byte_tbblue(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
 
@@ -2602,7 +2602,7 @@ int segmento;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
                 }
 #endif
 
@@ -2637,7 +2637,7 @@ z80_byte peek_byte_chrome(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
 
@@ -2693,7 +2693,7 @@ int segmento;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
                 }
 #endif
 
@@ -2731,7 +2731,7 @@ z80_byte peek_byte_baseconf(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
 
@@ -2813,7 +2813,7 @@ int segmento;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
                 }
 #endif
 
@@ -2848,7 +2848,7 @@ z80_byte peek_byte_tsconf(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
 
@@ -2961,7 +2961,7 @@ void poke_byte_timex(z80_int dir,z80_byte valor)
 //pese a que haya ex o dock mapeado
 #ifdef EMULATE_CONTEND
         if ( (dir&49152)==16384) {
-                t_estados += contend_table[ t_estados ];
+                t_estados += read_contend_table( t_estados, dir, "W" );
         }
 #endif
 
@@ -2995,7 +2995,7 @@ z80_byte peek_byte_timex(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
                 t_estados += 3;
@@ -3052,7 +3052,7 @@ int segmento;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
 
                 }
 #endif
@@ -3085,7 +3085,7 @@ z80_byte peek_byte_cpc(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
                 t_estados += 3;
@@ -3225,7 +3225,7 @@ int segmento;
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "W" );
 
                 }
 #endif
@@ -3258,7 +3258,7 @@ z80_byte peek_byte_sam(z80_int dir)
 
 #ifdef EMULATE_CONTEND
                 if (contend_pages_actual[segmento]) {
-                        t_estados += contend_table[ t_estados ];
+                        t_estados += read_contend_table( t_estados, dir, "R" );
                 }
 #endif
                 t_estados += 3;

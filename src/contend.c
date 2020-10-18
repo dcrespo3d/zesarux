@@ -34,6 +34,11 @@
 #include "tbblue.h"
 
 
+extern z80_byte *contend_table;
+extern z80_byte *contend_table_no_mreq;
+
+
+
 int contend_patron_65432100[] = { 5, 4, 3, 2, 1, 0, 0, 6 };
 
 int contend_patron_76543210[] = { 5, 4, 3, 2, 1, 0, 7, 6 };
@@ -280,6 +285,108 @@ void ula_contend_port_late_sam( z80_int port GCC_UNUSED )
 
 //48kb
 
+#define GENERATE_CONTEND2_LOG
+#ifdef  GENERATE_CONTEND2_LOG
+
+static FILE* lcpf2 = NULL;
+
+static int ctr2 = 0;
+static int ctr2max = 0xFFFF;
+
+static void open_log_contend2()
+{
+        if (ctr2 == 0) {
+                lcpf2 = fopen("contend_log2.csv", "wt");
+                if (!lcpf2) return;
+                fprintf(lcpf2, "TStates,Addr,WStates,OpType\n");
+        }
+}
+
+static void dump_log_contend2(int tstates, int addr, z80_byte w_states, char* op)
+{
+        if (!lcpf2) return;
+        char contend_char = ' ';
+        if (w_states > 0) contend_char = '0' + w_states;
+        fprintf(lcpf2, "%d,0x%04X,%c,%s\n", tstates, addr, contend_char, op);
+}
+
+static void close_log_contend2()
+{       
+        if (!lcpf2) return;
+        if (ctr2 == ctr2max) {
+                fclose(lcpf2);
+                lcpf2 = NULL;
+                ctr2++;
+        }
+        else
+                ctr2++;
+}
+
+#endif // GENERATE_CONTEND2_LOG
+
+z80_byte read_contend_table(int t_states, z80_int addr, char* op)
+{
+        z80_byte w_states = contend_table[ t_states ];
+#ifdef GENERATE_CONTEND2_LOG
+        open_log_contend2();
+        dump_log_contend2(t_states, addr, w_states, op);
+        close_log_contend2();
+#endif
+        return w_states;
+}
+
+z80_byte read_contend_table_no_mreq(int t_states, z80_int addr, char* op)
+{
+        z80_byte w_states = contend_table_no_mreq[ t_states ];
+#ifdef GENERATE_CONTEND2_LOG
+        open_log_contend2();
+        dump_log_contend2(t_states, addr, w_states, op);
+        close_log_contend2();
+#endif
+        return w_states;
+}
+
+
+
+//#define GENERATE_CONTEND_LOG
+#ifdef  GENERATE_CONTEND_LOG
+
+static FILE* lcpf = NULL;
+
+static int ctr = 0;
+static int ctrmax = 0xFFFF;
+
+static void open_log_contend()
+{
+        if (ctr == 0) {
+                lcpf = fopen("contend_log.csv", "wt");
+                if (!lcpf) return;
+                fprintf(lcpf, "TStates,Addr,WStates,OpType,IStates\n");
+        }
+}
+
+static void dump_log_contend(char* id, int direccion, int t_estados, int contend_value, int time)
+{
+        if (!lcpf) return;
+        char contend_char = ' ';
+        if (contend_value > 0) contend_char = '0' + contend_value;
+        fprintf(lcpf, "%d,0x%04X,%c,%s,%d\n", t_estados, direccion, contend_char, id, time);
+}
+
+static void close_log_contend()
+{       
+        if (!lcpf) return;
+        if (ctr == ctrmax) {
+                fclose(lcpf);
+                lcpf = NULL;
+                ctr++;
+        }
+        else
+                ctr++;
+}
+
+#endif // GENERATE_CONTEND_LOG
+
 void contend_read_48k(z80_int direccion,int time)
 {
 /*
@@ -288,15 +395,24 @@ void contend_read_48k(z80_int direccion,int time)
 1100000000000000 -> 49152
 Contention solo entre 16384 y 49151
 */
+        z80_byte contend_value = 0;
+        int t_estados0 = t_estados;
+
 #ifdef EMULATE_CONTEND
 	if ( (direccion&49152)==16384) {
-		t_estados += contend_table[ t_estados ];
+                contend_value = read_contend_table( t_estados, direccion, "R" );
+		t_estados += contend_value;
 	}
 #endif
 
 	//Y sumamos estados normales
 	t_estados += time;
 
+#ifdef  GENERATE_CONTEND_LOG
+        open_log_contend();
+        dump_log_contend("RR", direccion, t_estados0, contend_value, time);
+        close_log_contend();
+#endif
 }
 
 void contend_read_no_mreq_48k(z80_int direccion,int time)
@@ -307,15 +423,24 @@ void contend_read_no_mreq_48k(z80_int direccion,int time)
 1100000000000000 -> 49152
 Contention solo entre 16384 y 49151
 */
+        z80_byte contend_value = 0;
+        int t_estados0 = t_estados;
+
 #ifdef EMULATE_CONTEND
         if ( (direccion&49152)==16384) {
-                t_estados += contend_table_no_mreq[ t_estados ];
+                contend_value = read_contend_table_no_mreq( t_estados, direccion, "RN" );
+                t_estados += contend_value;
         }
 #endif
 
         //Y sumamos estados normales
         t_estados += time;
 
+#ifdef  GENERATE_CONTEND_LOG
+        open_log_contend();
+        dump_log_contend("RN", direccion, t_estados0, contend_value, time);
+        close_log_contend();
+#endif
 }
 
 void contend_write_no_mreq_48k(z80_int direccion,int time)
@@ -326,15 +451,24 @@ void contend_write_no_mreq_48k(z80_int direccion,int time)
 1100000000000000 -> 49152
 Contention solo entre 16384 y 49151
 */
+        z80_byte contend_value = 0;
+        int t_estados0 = t_estados;
+
 #ifdef EMULATE_CONTEND
         if ( (direccion&49152)==16384) {
-                t_estados += contend_table_no_mreq[ t_estados ];
+                contend_value = read_contend_table_no_mreq( t_estados, direccion, "WN" );
+                t_estados += contend_value;
         }
 #endif
 
         //Y sumamos estados normales
         t_estados += time;
 
+#ifdef  GENERATE_CONTEND_LOG
+        open_log_contend();
+        dump_log_contend("WN", direccion, t_estados0, contend_value, time);
+        close_log_contend();
+#endif
 }
 
 
@@ -343,7 +477,7 @@ void ula_contend_port_early_48k( z80_int port )
 #ifdef EMULATE_CONTEND
 
         if ( (port&49152)==16384) {
-                t_estados += contend_table_no_mreq[ t_estados ];
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "P" );
         }
 #endif
 
@@ -355,16 +489,16 @@ void ula_contend_port_late_48k( z80_int port )
 #ifdef EMULATE_CONTEND
   if( port_from_ula( port ) ) {
 
-    t_estados += contend_table_no_mreq[ t_estados ];
+    t_estados += read_contend_table_no_mreq( t_estados, 0, "P" );
     t_estados += 2;
 
   }
   else {
 
         if ( (port&49152)==16384) {
-      		t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-		t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-		t_estados += contend_table_no_mreq[ t_estados ];
+      		t_estados += read_contend_table_no_mreq( t_estados, 0, "P" ); t_estados++;
+		t_estados += read_contend_table_no_mreq( t_estados, 0, "P" ); t_estados++;
+		t_estados += read_contend_table_no_mreq( t_estados, 0, "P" );
 	}
 	else {
 	      t_estados += 2;
@@ -390,7 +524,7 @@ Contention solo entre 16384 y 49151
 */
 #ifdef EMULATE_CONTEND
 	if ( (direccion&49152)==16384) {
-		t_estados += contend_table[ t_estados ];
+		t_estados += read_contend_table( t_estados, direccion, "R" );
 	}
 #endif
 
@@ -409,7 +543,7 @@ Contention solo entre 16384 y 49151
 */
 #ifdef EMULATE_CONTEND
         if ( (direccion&49152)==16384) {
-                t_estados += contend_table_no_mreq[ t_estados ];
+                t_estados += read_contend_table_no_mreq( t_estados, direccion, "R" );
         }
 #endif
 
@@ -428,7 +562,7 @@ Contention solo entre 16384 y 49151
 */
 #ifdef EMULATE_CONTEND
         if ( (direccion&49152)==16384) {
-                t_estados += contend_table_no_mreq[ t_estados ];
+                t_estados += read_contend_table_no_mreq( t_estados, direccion, "W" );
         }
 #endif
 
@@ -443,7 +577,7 @@ void ula_contend_port_early_timex( z80_int port )
 #ifdef EMULATE_CONTEND
 
         if ( (port&49152)==16384) {
-                t_estados += contend_table_no_mreq[ t_estados ];
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "P" );
         }
 #endif
 
@@ -455,16 +589,16 @@ void ula_contend_port_late_timex( z80_int port )
 #ifdef EMULATE_CONTEND
   if( port_from_ula( port ) ) {
 
-    t_estados += contend_table_no_mreq[ t_estados ];
+    t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
     t_estados += 2;
 
   }
   else {
 
         if ( (port&49152)==16384) {
-      		t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-		t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-		t_estados += contend_table_no_mreq[ t_estados ];
+      		t_estados += read_contend_table_no_mreq( t_estados, 0, "P" ); t_estados++;
+		t_estados += read_contend_table_no_mreq( t_estados, 0, "P" ); t_estados++;
+		t_estados += read_contend_table_no_mreq( t_estados, 0, "P" );
 	}
 	else {
 	      t_estados += 2;
@@ -490,7 +624,7 @@ void contend_read_128k(z80_int direccion,int time)
 		z80_int segmento;
                 segmento=direccion / 16384;
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, direccion, "R" );
 		}
 #endif
 
@@ -507,7 +641,7 @@ void contend_read_no_mreq_128k(z80_int direccion,int time)
 		z80_int segmento;
                 segmento=direccion / 16384;
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, direccion, "R" );
 		}
 #endif
 
@@ -527,7 +661,7 @@ void contend_write_no_mreq_128k(z80_int direccion,int time)
 
 		//printf ("direccion: %d segmento: %d contend: %d\n",direccion,segmento,contend_pages_actual[segmento]);
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, direccion, "W" );
 		}
 #endif
 
@@ -544,7 +678,7 @@ void ula_contend_port_early_128k( z80_int port )
 z80_int segmento;
                 segmento=port / 16384;
                 if (contend_pages_actual[segmento]) {
-                	t_estados += contend_table_no_mreq[ t_estados ];
+                	t_estados += read_contend_table_no_mreq( t_estados, 0, "P" );
 
 			/*
 			extern int temp_gigascreen_ajuste;
@@ -552,7 +686,7 @@ z80_int segmento;
 			if (port==32765) {
 			for (i=0;i<temp_gigascreen_ajuste;i++) {
 				t_estados++;
-				//t_estados +=contend_table_no_mreq[ t_estados ];
+				//t_estados +=read_contend_table_no_mreq( t_estados );
 			}
 			}
 			*/
@@ -568,7 +702,7 @@ void ula_contend_port_late_128k( z80_int port )
 {
 #ifdef EMULATE_CONTEND
   if( port_from_ula( port ) ) {
-    t_estados += contend_table_no_mreq[ t_estados ];
+    t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
     t_estados += 2;
 
   }
@@ -578,9 +712,9 @@ void ula_contend_port_late_128k( z80_int port )
 z80_int segmento;
      segmento=port / 16384;
     if (contend_pages_actual[segmento]) {
-                t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-                t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-                t_estados += contend_table_no_mreq[ t_estados ];
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" ); t_estados++;
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" ); t_estados++;
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
 
         }
         else {
@@ -604,7 +738,7 @@ void contend_read_chloe(z80_int direccion,int time)
 		z80_int segmento;
                 segmento=direccion / 16384;
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, 0, "-" );
 		}
 #endif
 
@@ -621,7 +755,7 @@ void contend_read_no_mreq_chloe(z80_int direccion,int time)
 		z80_int segmento;
                 segmento=direccion / 16384;
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, 0, "-" );
 		}
 #endif
 
@@ -641,7 +775,7 @@ void contend_write_no_mreq_chloe(z80_int direccion,int time)
 
 		//printf ("direccion: %d segmento: %d contend: %d\n",direccion,segmento,contend_pages_actual[segmento]);
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, 0, "-" );
 		}
 #endif
 
@@ -658,7 +792,7 @@ void ula_contend_port_early_chloe( z80_int port )
 z80_int segmento;
                 segmento=port / 16384;
                 if (contend_pages_actual[segmento]) {
-                	t_estados += contend_table_no_mreq[ t_estados ];
+                	t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
 
 
 	        }
@@ -671,7 +805,7 @@ void ula_contend_port_late_chloe( z80_int port )
 {
 #ifdef EMULATE_CONTEND
   if( port_from_ula( port ) ) {
-    t_estados += contend_table_no_mreq[ t_estados ];
+    t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
     t_estados += 2;
 
   }
@@ -681,9 +815,9 @@ void ula_contend_port_late_chloe( z80_int port )
 z80_int segmento;
      segmento=port / 16384;
     if (contend_pages_actual[segmento]) {
-                t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-                t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-                t_estados += contend_table_no_mreq[ t_estados ];
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" ); t_estados++;
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" ); t_estados++;
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
 
         }
         else {
@@ -707,7 +841,7 @@ void contend_read_chrome(z80_int direccion,int time)
 		z80_int segmento;
                 segmento=direccion / 16384;
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, 0, "-" );
 		}
 #endif
 
@@ -724,7 +858,7 @@ void contend_read_no_mreq_chrome(z80_int direccion,int time)
 		z80_int segmento;
                 segmento=direccion / 16384;
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, 0, "-" );
 		}
 #endif
 
@@ -744,7 +878,7 @@ void contend_write_no_mreq_chrome(z80_int direccion,int time)
 
 		//printf ("direccion: %d segmento: %d contend: %d\n",direccion,segmento,contend_pages_actual[segmento]);
 		if (contend_pages_actual[segmento]) {
-			t_estados += contend_table[ t_estados ];
+			t_estados += read_contend_table( t_estados, 0, "-" );
 		}
 #endif
 
@@ -761,7 +895,7 @@ void ula_contend_port_early_chrome( z80_int port )
 z80_int segmento;
                 segmento=port / 16384;
                 if (contend_pages_actual[segmento]) {
-                	t_estados += contend_table_no_mreq[ t_estados ];
+                	t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
 
 
 	        }
@@ -774,7 +908,7 @@ void ula_contend_port_late_chrome( z80_int port )
 {
 #ifdef EMULATE_CONTEND
   if( port_from_ula( port ) ) {
-    t_estados += contend_table_no_mreq[ t_estados ];
+    t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
     t_estados += 2;
 
   }
@@ -784,9 +918,9 @@ void ula_contend_port_late_chrome( z80_int port )
 z80_int segmento;
      segmento=port / 16384;
     if (contend_pages_actual[segmento]) {
-                t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-                t_estados += contend_table_no_mreq[ t_estados ]; t_estados++;
-                t_estados += contend_table_no_mreq[ t_estados ];
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" ); t_estados++;
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" ); t_estados++;
+                t_estados += read_contend_table_no_mreq( t_estados, 0, "-" );
 
         }
         else {
@@ -1615,8 +1749,32 @@ z80_byte *contend_table_no_mreq;
         }
         //printf ("Final tabla: %d\n",final_tabla);
 
+#define DUMP_CONTEND_TABLES
+#ifdef  DUMP_CONTEND_TABLES
 
+        FILE* pf = fopen("contend_table.csv", "wt");
+        for (i = 0; i < final_tabla; i++)
+        {
+                if (i != 0) {
+                        if ((i % 224) == 0) fprintf(pf, "\n");
+                        else                fprintf(pf, ",");
+                        fprintf(pf, "%d", contend_table[i]);
+                }
+        }
+        fclose(pf);
 
+        pf = fopen("contend_table_no_mreq.csv", "wt");
+        for (i = 0; i < final_tabla; i++)
+        {
+                if (i != 0) {
+                        if ((i % 224) == 0) fprintf(pf, "\n");
+                        else                fprintf(pf, ",");
+                        fprintf(pf, "%d", contend_table_no_mreq[i]);
+                }
+        }
+        fclose(pf);
+
+#endif
 }
 
 

@@ -5443,7 +5443,7 @@ int si_toca_snow_effect(int x)
 		//if (contend_table[estado]>2) return 1;
 
 
-		if (contend_table[estado]>=snow_effect_min_value) return 1;
+		if (read_contend_table(estado, 0x4000, "SNOW")>=snow_effect_min_value) return 1;
 
 
 		/*
